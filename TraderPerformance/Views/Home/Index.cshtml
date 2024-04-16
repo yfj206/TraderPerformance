@@ -1,0 +1,61 @@
+﻿@model IEnumerable<HomeViewModel>
+@using Microsoft.AspNetCore.Identity
+@using TraderPerformance.ViewModels
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    ViewData["Title"] = "Home";
+    var user = await UserManager.GetUserAsync(User);
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Welcome, @user.Email!</h2>
+
+    <!-- CSV Upload Form -->
+    <div class="mb-3">
+        <h6 class="card-subtitle mb-2 text-muted">Upload CSV</h6>
+        <form method="post" enctype="multipart/form-data" action="@Url.Action("Import", "Home")" class="d-flex align-items-center">
+            <div class="input-group">
+                <input type="file" class="form-control" id="csvFile" name="csvFile">
+                <button type="submit" class="btn btn-success"><i class="bi bi-cloud-upload"></i> Import</button>
+            </div>
+        </form>
+    </div>
+
+    <h4 class="text-center mb-4">Portfolios</h4>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var portfolio in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <h5 class="card-title">@portfolio.Name</h5>
+
+                        <!-- Gain -->
+                        <div class="mb-3">
+                            <h6 class="card-subtitle mb-2 text-muted">Gain</h6>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: @(portfolio.GainLoss >= 0 ? portfolio.ProgressWidth : 0)%"></div>
+                            </div>
+                            <p class="mt-2 text-success">@(portfolio.GainLoss >= 0 ? portfolio.GainLoss.ToString("C") : "-")</p>
+                        </div>
+
+                        <!-- Loss -->
+                        <div class="mb-3">
+                            <h6 class="card-subtitle mb-2 text-muted">Loss</h6>
+                            <div class="progress">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: @(portfolio.GainLoss < 0 ? portfolio.ProgressWidth : 0)%"></div>
+                            </div>
+                            <p class="mt-2 text-danger">@(portfolio.GainLoss < 0 ? Math.Abs(portfolio.GainLoss).ToString("C") : "-")</p>
+                        </div>
+
+                        <a href="@Url.Action("Index", "Dashboard", new { portfolioId = portfolio.Id })" class="btn btn-primary mt-auto">
+                            <i class="bi bi-bar-chart-line"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

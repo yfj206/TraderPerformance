@@ -1,0 +1,14 @@
+﻿@model TraderPerformance.Models.Portfolio
+
+<div>
+    <h4>Delete @Model.Name</h4>
+    <hr />
+    <p>Are you sure you want to delete this portfolio?</p>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        </div>
+    </form>
+</div>

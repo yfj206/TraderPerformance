@@ -1,0 +1,130 @@
+﻿@model TraderPerformance.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2 class="text-center">@ViewData["Title"]</h2>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Dashboard and Portfolio Name -->
+            <div class="mb-4">
+                <h3><i class="bi bi-speedometer2"></i> Dashboard</h3>
+                <h4><i class="bi bi-folder2-open"></i> @Model.Portfolio.Name</h4>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Portfolio List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-folder2-open"></i> Portfolios</h5>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary mb-3"><i class="bi bi-arrow-left"></i> Back to Portfolios</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <!-- Trade List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-list-ul"></i> Trades</h5>
+                    <a href="@Url.Action("Index", "Trade", new { portfolioId = Model.Portfolio.Id })" class="btn btn-secondary mb-3"><i class="bi bi-eye"></i> View Trades</a>
+                    <!-- CSV Upload Form -->
+                    <h6 class="card-subtitle mb-2 text-muted">Upload CSV</h6>
+                    <form method="post" enctype="multipart/form-data" action="@Url.Action("Import", "Home")">
+                        <div class="mb-3">
+                            <input type="file" class="form-control-file" id="csvFile" name="csvFile">
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Import</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <!-- Securities List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-shield-lock"></i> Securities</h5>
+                    <a href="@Url.Action("Index", "Security", new { portfolioId = Model.Portfolio.Id })" class="btn btn-secondary mb-3"><i class="bi bi-eye"></i> View Securities</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gain/Loss by Today -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-bar-chart"></i> Gain/Loss by @(Model.ShowToday == true ? "Today" : "Year")</h5>
+                    @if (Model.GroupedTrades != null)
+                    {
+                        foreach (var group in Model.GroupedTrades)
+                        {
+                            <div class="mb-4">
+                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-bar-chart"></i> @group.TickerSymbol</h6>
+                                <div class="progress">
+                                    <div class="progress-bar @((group.TotalSale - group.TotalCost) >= 0 ? "bg-success" : "bg-danger")" role="progressbar" style="width: @group.ProgressWidth%">
+                                        <span class="visually-hidden">@((group.TotalSale - group.TotalCost) >= 0 ? group.GainLoss.ToString("C") : (-group.GainLoss).ToString("C"))</span>
+                                    </div>
+                                </div>
+                                <p class="mt-2 @((group.TotalSale - group.TotalCost) >= 0 ? "text-success" : "text-danger")">
+                                    <i class="bi bi-currency-dollar"></i> @((group.TotalSale - group.TotalCost) >= 0 ? group.GainLoss.ToString("C") : (-group.GainLoss).ToString("C"))
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Total Cost: <i class="bi bi-cash"></i> @group.TotalCost.ToString("C")</small>
+                                    <small class="text-muted">Total Sale: <i class="bi bi-cash-stack"></i> @group.TotalSale.ToString("C")</small>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var portfolioId = '@Model.Portfolio.Id';
+
+        // Fetch gain/loss data for each security
+        fetch(`/Dashboard/CalculateGainLossForPortfolio?portfolioId=${portfolioId}`)
+            .then(response => response.json())
+            .then(portfolio => {
+                // Set the gain/loss for the portfolio
+                var gainLossElement = document.querySelector('.text-success');
+                var lossElement = document.querySelector('.text-danger');
+
+                if (gainLossElement) {
+                    gainLossElement.innerText = portfolio.GainLoss >= 0 ? portfolio.GainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "-";
+                }
+
+                if (lossElement) {
+                    lossElement.innerText = portfolio.GainLoss < 0 ? Math.abs(portfolio.GainLoss).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "-";
+
+                }
+
+                // Set the progress bar width
+                var gainProgressBar = document.querySelector('.bg-success');
+                var lossProgressBar = document.querySelector('.bg-danger');
+
+                if (gainProgressBar) {
+                    gainProgressBar.style.width = `${portfolio.GainLoss >= 0 ? portfolio.ProgressWidth : 0}%`;
+                }
+
+                if (lossProgressBar) {
+                    lossProgressBar.style.width = `${portfolio.GainLoss < 0 ? portfolio.ProgressWidth : 0}%`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching gain/loss data:', error);
+            });
+    </script>
+}
