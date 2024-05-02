@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TraderPerformance.Data;
@@ -23,11 +25,12 @@ public class TradeRepository : ITradeRepository
 
     public IEnumerable<Trade> GetTradesForPortfolio(Guid portfolioId)
     {
-        return _context.Trades.Where(t => t.Id == portfolioId).ToList();
+        return _context.Trades.FromSqlRaw("EXECUTE GetTradesAndPortfolioName @PortfolioId", new SqlParameter("@PortfolioId", portfolioId)).ToList();
     }
 
     public string GetPortfolioName(Guid portfolioId)
     {
-        return _context.Portfolios.FirstOrDefault(p => p.Id == portfolioId)?.Name;
+        return _context.Portfolios.FromSqlRaw("EXECUTE GetTradesAndPortfolioName @PortfolioId", new SqlParameter("@PortfolioId", portfolioId)).FirstOrDefault()?.Name;
     }
 }
+

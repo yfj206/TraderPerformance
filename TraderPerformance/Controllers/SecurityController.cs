@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
+using System;
 using System.Threading.Tasks;
 using TraderPerformance.Data;
 using TraderPerformance.Models;
@@ -11,18 +10,19 @@ namespace TraderPerformance.Controllers
     public class SecurityController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
 
-        public SecurityController(UserManager<IdentityUser> userManager, ApplicationDbContext context)
+        public SecurityController(ApplicationDbContext context)
         {
             _context = context;
-            _userManager = userManager;
         }
 
         // GET: Security
         public async Task<IActionResult> Index(Guid portfolioId)
         {
-            var securities = await _context.Securities.ToListAsync();
+            var securities = await _context.Securities.FromSqlInterpolated($@"
+                EXEC Security_ReadAll"
+            ).ToListAsync();
+
             ViewData["PortfolioId"] = portfolioId;
             return View(securities);
         }
@@ -35,15 +35,18 @@ namespace TraderPerformance.Controllers
                 return NotFound();
             }
 
-            var security = await _context.Securities
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var securities = await _context.Securities.FromSqlRaw("EXEC Security_Read {0}", id).ToListAsync();
+
+            // Now, perform further operations on the returned data
+            var security = securities.FirstOrDefault();
+
             if (security == null)
             {
                 return NotFound();
             }
-			ViewData["PortfolioId"] = id;
 
-			return View(security);
+            ViewData["PortfolioId"] = id;
+            return View(security);
         }
 
         // GET: Security/Create
@@ -55,13 +58,26 @@ namespace TraderPerformance.Controllers
         // POST: Security/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Symbol,Name")] Security security)
+        public async Task<IActionResult> Create([Bind("TickerSymbol,Name")] Security security)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(security);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                        EXEC Security_Create 
+                            @TickerSymbol = {security.TickerSymbol}, 
+                            @Name = {security.Name}"
+                    );
+
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    // Handle exception
+                    ModelState.AddModelError("", "Error occurred while creating the security.");
+                    return View(security);
+                }
             }
             return View(security);
         }
@@ -74,20 +90,24 @@ namespace TraderPerformance.Controllers
                 return NotFound();
             }
 
-            var security = await _context.Securities.FindAsync(id);
+            var securities = await _context.Securities.FromSqlRaw("EXEC Security_Read {0}", id).ToListAsync();
+
+            // Now, perform further operations on the returned data
+            var security = securities.FirstOrDefault();
+
             if (security == null)
             {
                 return NotFound();
             }
-			ViewData["PortfolioId"] = id;
 
-			return View(security);
+            ViewData["PortfolioId"] = id;
+            return View(security);
         }
 
         // POST: Security/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Symbol,Name")] Security security)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,TickerSymbol,Name")] Security security)
         {
             if (id != security.Id)
             {
@@ -98,25 +118,23 @@ namespace TraderPerformance.Controllers
             {
                 try
                 {
-                    _context.Update(security);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!SecurityExists(security.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-			ViewData["PortfolioId"] = id;
+                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                        EXEC Security_Update 
+                            @Id = {security.Id}, 
+                            @TickerSymbol = {security.TickerSymbol}, 
+                            @Name = {security.Name}"
+                    );
 
-			return View(security);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    // Handle exception
+                    ModelState.AddModelError("", "Error occurred while updating the security.");
+                    return View(security);
+                }
+            }
+            return View(security);
         }
 
         // GET: Security/Delete/5
@@ -126,36 +144,38 @@ namespace TraderPerformance.Controllers
             {
                 return NotFound();
             }
+            var securities = await _context.Securities.FromSqlRaw("EXEC Security_Read {0}", id).ToListAsync();
 
-            var security = await _context.Securities
-                .FirstOrDefaultAsync(m => m.Id == id);
+            // Now, perform further operations on the returned data
+            var security = securities.FirstOrDefault();
+
             if (security == null)
             {
                 return NotFound();
             }
 
-			ViewData["PortfolioId"] = id;
-
-			return View(security);
+            ViewData["PortfolioId"] = id;
+            return View(security);
         }
 
         // POST: Security/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var security = await _context.Securities.FindAsync(id);
-            _context.Securities.Remove(security);
-            await _context.SaveChangesAsync();
-			ViewData["PortfolioId"] = id;
+            try
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                    EXEC Security_Delete @Id = {id}"
+                );
 
-			return RedirectToAction(nameof(Index));
-
-        }
-
-        private bool SecurityExists(Guid id)
-        {
-            return _context.Securities.Any(e => e.Id == id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+                return NotFound();
+            }
         }
     }
 }

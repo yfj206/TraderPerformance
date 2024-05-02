@@ -9,6 +9,10 @@ public class DashboardViewModel
     public Portfolio Portfolio { get; set; }
     public List<GroupedTradeViewModel> GroupedTrades { get; set; }
     public bool ShowToday { get; internal set; }
+    public decimal GainLossToday { get; internal set; }
+    public decimal GainLossAllTime { get; internal set; }
+    public object GainLossWeekly { get; internal set; }
+    public object GainLossMonthly { get; internal set; }
 }
 public class GroupedTradeViewModel
 {
@@ -19,6 +23,7 @@ public class GroupedTradeViewModel
     public decimal GainLoss { get; set; }
     public decimal ProgressWidth { get; set; }
     public bool ShowToday { get; set; }
+    public DateTime Date { get; internal set; }
 }
 
 
