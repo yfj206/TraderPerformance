@@ -1,0 +1,41 @@
+﻿@model IEnumerable<TraderPerformance.Models.Trade>
+
+@{
+    ViewData["Title"] = "Trade List";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Security</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var trade in Model)
+        {
+            <tr>
+                <td>@trade.Date.ToShortDateString()</td>
+                <td>@trade.Type</td>
+                <td>@trade.Quantity</td>
+                <td>@trade.Price.ToString("C")</td>
+                <td>@trade.Security.Name (@trade.Security.TickerSymbol)</td>
+                <td>
+                    <a href="@Url.Action("Details", "Trade", new { id = trade.Id })" class="btn btn-info btn-sm" title="Details"><i class="bi bi-info-circle"></i></a>
+                    <a href="@Url.Action("Edit", "Trade", new { id = trade.Id })" class="btn btn-primary btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                    <a href="@Url.Action("Delete", "Trade", new { id = trade.Id })" class="btn btn-danger btn-sm" title="Delete"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css"></script>
+}

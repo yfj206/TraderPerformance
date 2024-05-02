@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Import Trades";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="csvFile">Choose CSV File</label>
+        <input type="file" class="form-control-file" id="csvFile" name="CsvFile">
+    </div>
+    <button type="submit" class="btn btn-primary">Import</button>
+</form>
