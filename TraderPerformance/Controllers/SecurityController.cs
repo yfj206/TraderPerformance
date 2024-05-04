@@ -55,7 +55,6 @@ namespace TraderPerformance.Controllers
             return View();
         }
 
-        // POST: Security/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("TickerSymbol,Name")] Security security)
@@ -66,6 +65,7 @@ namespace TraderPerformance.Controllers
                 {
                     await _context.Database.ExecuteSqlInterpolatedAsync($@"
                         EXEC Security_Create 
+                            @Id = {Guid.NewGuid()},
                             @TickerSymbol = {security.TickerSymbol}, 
                             @Name = {security.Name}"
                     );
@@ -82,7 +82,6 @@ namespace TraderPerformance.Controllers
             return View(security);
         }
 
-        // GET: Security/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
             if (id == null)
@@ -104,10 +103,9 @@ namespace TraderPerformance.Controllers
             return View(security);
         }
 
-        // POST: Security/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,TickerSymbol,Name")] Security security)
+        public async Task<IActionResult> Edit(Guid id, Security security)
         {
             if (id != security.Id)
             {
@@ -137,7 +135,6 @@ namespace TraderPerformance.Controllers
             return View(security);
         }
 
-        // GET: Security/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
             if (id == null)
@@ -158,8 +155,7 @@ namespace TraderPerformance.Controllers
             return View(security);
         }
 
-        // POST: Security/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
@@ -173,7 +169,6 @@ namespace TraderPerformance.Controllers
             }
             catch (Exception ex)
             {
-                // Handle exception
                 return NotFound();
             }
         }
