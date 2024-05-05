@@ -21,9 +21,10 @@ namespace TraderPerformance.Controllers
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+
             var portfolios = await _context.Portfolios
-                .Where(p => p.UserId == currentUser.Id)
-                .ToListAsync();
+                        .FromSqlRaw("SELECT * FROM Portfolio_ReadAll_View")
+                        .Where(p => p.UserId == currentUser.Id).ToListAsync();
 
             return View(portfolios);
         }

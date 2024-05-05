@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using TraderPerformance.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace TraderPerformance.Controllers
 {
@@ -39,11 +40,27 @@ namespace TraderPerformance.Controllers
             {
                 Portfolio = portfolio,
                 GroupedTrades = groupedTrades,
-                ShowToday = _context.Trades.Where(t => t.UserId == currentUser.Id && t.PortfolioID == portfolioId && t.Date.Date == DateTime.Now.Date).Any()
+                ShowToday = await CheckTradesForCurrentUser(currentUser.Id, portfolioId, DateTime.Now.Date)
             };
 
             return View(viewModel);
         }
+        private async Task<bool> CheckTradesForCurrentUser(string userId, Guid portfolioId, DateTime currentDate)
+        {
+            var userIdParam = new SqlParameter("@UserId", userId);
+            var portfolioIdParam = new SqlParameter("@PortfolioId", portfolioId);
+            var currentDateParam = new SqlParameter("@CurrentDate", currentDate);
+
+            var exists = await _context.Trades
+                .FromSqlRaw("SELECT Id, Date, PortfolioID, Price, Quantity, SecurityID, Type, UserId " +
+                            "FROM dbo.CheckTradesForCurrentUser(@UserId, @PortfolioId, @CurrentDate)",
+                            userIdParam, portfolioIdParam, currentDateParam)
+                .AnyAsync();
+
+            return exists;
+        }
+
+
 
         private async Task<List<GroupedTradeViewModel>> GetGroupedTrades(Guid portfolioId)
         {

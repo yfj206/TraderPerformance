@@ -27,6 +27,7 @@ public class TradeController : Controller
     {
         var currentUser = await _userManager.GetUserAsync(User);
         var trades = await _context.Trades
+            .FromSqlRaw("SELECT * FROM Trades_ReadAll_View")
             .Where(t => t.UserId == currentUser.Id && t.PortfolioID == portfolioId)
             .Include(t => t.Security)
             .ToListAsync();

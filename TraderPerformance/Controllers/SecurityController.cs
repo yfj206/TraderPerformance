@@ -16,16 +16,16 @@ namespace TraderPerformance.Controllers
             _context = context;
         }
 
-        // GET: Security
         public async Task<IActionResult> Index(Guid portfolioId)
         {
-            var securities = await _context.Securities.FromSqlInterpolated($@"
-                EXEC Security_ReadAll"
-            ).ToListAsync();
+            var securities = await _context.Securities
+                .FromSqlRaw("SELECT * FROM Security_ReadAll_View")
+                .ToListAsync();
 
             ViewData["PortfolioId"] = portfolioId;
-            return View(securities);
+            return View(securities); 
         }
+
 
         // GET: Security/Details/5
         public async Task<IActionResult> Details(Guid? id)
