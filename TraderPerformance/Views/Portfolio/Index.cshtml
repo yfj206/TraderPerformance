@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Portfolios";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var portfolio in Model)
+        {
+            <tr>
+                <td>@portfolio.Name</td>
+                <td>
+                    <a href="@Url.Action("Details", "Portfolio", new { id = portfolio.Id })" class="btn btn-info btn-sm" title="Details"><i class="bi bi-info-circle"></i></a>
+                    <a href="@Url.Action("Edit", "Portfolio", new { id = portfolio.Id })" class="btn btn-primary btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                    <a href="@Url.Action("Delete", "Portfolio", new { id = portfolio.Id })" class="btn btn-danger btn-sm" title="Delete"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2>Add New Portfolio</h2>
+
+<form method="post" action="@Url.Action("Create", "Portfolio")">
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="Name" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-success"><i class="bi bi-plus"></i> Add</button>
+</form>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css"></script>
+}
